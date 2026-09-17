@@ -5,7 +5,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DB_FILE = os.path.join(BASE_DIR, "data", "training_data.sqlite3").replace("\\", "/")
 DB_FILE = os.environ.get("AUDIT_DB_FILE", DEFAULT_DB_FILE)
 DB_PATH_POSIX = DB_FILE.replace("\\", "/")
-DB_URI = os.environ.get("AUDIT_DB_URI", f"file:{DB_PATH_POSIX}?mode=ro")
+
+# Support AUDIT_DB_PATH (matching README & CLI), AUDIT_DB_URI, or AUDIT_DB_FILE with read-only enforcement
+_custom_db = os.environ.get("AUDIT_DB_PATH") or os.environ.get("AUDIT_DB_URI")
+if _custom_db:
+    if _custom_db.startswith("file:"):
+        DB_URI = _custom_db if "mode=ro" in _custom_db else f"{_custom_db}?mode=ro"
+    else:
+        DB_URI = f"file:{_custom_db.replace('\\', '/')}?mode=ro"
+else:
+    DB_URI = f"file:{DB_PATH_POSIX}?mode=ro"
 
 APP_NAME = "Mini Financial Audit Tool"
 API_PREFIX = "/api/v1"
